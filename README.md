@@ -38,7 +38,7 @@
 ## 🛠 구축 및 기여 방법
 본 사이트는 정적 웹 호스팅 방식을 사용합니다.
 
-1. 저장소 클론: `git clone https://github.com/사용자아이디/저장소이름.git`
+1. 저장소 클론: `git clone https://github.com/joshuariver/saebyeok.org.git`
 2. 수정 사항 반영 후 Push
 3. GitHub Pages를 통해 자동 배포
 
