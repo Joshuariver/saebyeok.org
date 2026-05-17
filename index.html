@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>노래모임 새벽의 아카이브 | Prototype</title>
+  <meta name="description" content="노래모임 새벽의 아카이브 frontend-only prototype" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ===== DESIGN TOKENS ===== */
+    :root {
+      --midnight:  #0c1220;
+      --dusk:      #1a2840;
+      --steel:     #2d4060;
+      --gold:      #c8882a;
+      --amber:     #e8a228;
+      --paper:     #f2e8d2;
+      --paper-2:   #ede0c0;
+      --ink:       #18130c;
+      --muted:     #4a3a2c;
+      --brick:     #8a3530;
+      --line:      #c4b490;
+      --cream:     #faf0dc;
+      --tag-bg:    #e4d8be;
+      --shadow:    0 4px 32px rgba(12,18,32,.14), 0 1px 6px rgba(12,18,32,.06);
+      --shadow-sm: 0 2px 12px rgba(12,18,32,.08);
+      --r: 4px;
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: 'Noto Sans KR', -apple-system, sans-serif;
+      font-weight: 400;
+      font-size: 17px;
+      line-height: 1.78;
+      min-height: 100vh;
+    }
+
+    /* Subtle warm gradient wash */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 50% at 5% 0%,  rgba(232,162,40,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 95% 100%, rgba(26,40,64,.05) 0%, transparent 60%);
+      z-index: 0;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ===== DEMO BAR ===== */
+    .demo-bar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--brick);
+      color: rgba(255,242,224,.88);
+      padding: .44rem 1.5rem;
+      text-align: center;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      position: sticky;
+      top: 28px;
+      z-index: 30;
+      background: rgba(242,232,210,.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: .85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: .08rem;
+      flex-shrink: 0;
+    }
+
+    .brand strong {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--midnight);
+      letter-spacing: -.02em;
+    }
+
+    .brand span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      letter-spacing: .03em;
+    }
+
+    /* ===== TOP NAV ===== */
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .18rem;
+      justify-content: flex-end;
+    }
+
+    /* Global button reset — specific contexts override below */
+    button, .btn {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: .42rem .72rem;
+      border-radius: calc(var(--r) * 2);
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: .9rem;
+      font-weight: 400;
+      text-decoration: none;
+      transition: color .18s, background .18s, border-color .18s, transform .18s, box-shadow .18s;
+      letter-spacing: -.01em;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .top-nav button { color: var(--muted); }
+    .top-nav button:hover { color: var(--ink); background: rgba(12,18,32,.05); }
+    .top-nav button.active {
+      background: var(--midnight);
+      color: var(--cream);
+      font-weight: 500;
+    }
+
+    /* btn.primary used on hero */
+    .btn.primary {
+      background: var(--midnight);
+      color: var(--cream);
+      border-color: var(--midnight);
+    }
+
+    /* ===== LAYOUT ===== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.75rem 1.5rem 5rem;
+      display: grid;
+      grid-template-columns: 228px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== SIDEBAR ===== */
+    aside {
+      position: sticky;
+      top: 110px;
+      align-self: start;
+      background: rgba(250,240,220,.82);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--r) * 3);
+      padding: 1.1rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    aside h2 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .7rem;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: .75rem;
+      padding-bottom: .6rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .side-nav { display: grid; gap: .12rem; }
+
+    .side-nav button {
+      width: 100%;
+      text-align: left;
+      border-radius: var(--r);
+      padding: .55rem .65rem;
+      font-size: .95rem;
+      color: var(--muted);
+      position: relative;
+      padding-left: .9rem;
+      transition: color .15s, background .15s, padding-left .15s;
+    }
+
+    .side-nav button::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 2px; height: 0;
+      background: var(--gold);
+      border-radius: 1px;
+      transition: height .2s;
+    }
+
+    .side-nav button:hover { color: var(--ink); background: rgba(12,18,32,.04); }
+
+    .side-nav button.active {
+      color: var(--ink);
+      background: rgba(200,136,42,.11);
+      padding-left: 1.1rem;
+      font-weight: 500;
+    }
+
+    .side-nav button.active::before { height: 55%; }
+
+    /* ===== MAIN ===== */
+    main { min-width: 0; position: relative; z-index: 1; }
+
+    .panel {
+      background: var(--cream);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--r) * 4);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.2rem;
+      position: relative;
+      animation: fadeUp .38s ease both;
+    }
+
+    #app .panel:nth-child(1) { animation-delay: .04s; }
+    #app .panel:nth-child(2) { animation-delay: .11s; }
+    #app .panel:nth-child(3) { animation-delay: .18s; }
+    #app .panel:nth-child(4) { animation-delay: .25s; }
+
+    /* Subtle fold corner */
+    .panel::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 22px; height: 22px;
+      background: linear-gradient(225deg, var(--line) 50%, transparent 50%);
+      border-radius: 0 calc(var(--r) * 4) 0 0;
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      padding: 3.75rem 3.25rem 3.25rem;
+      background:
+        linear-gradient(155deg, var(--midnight) 0%, var(--dusk) 42%, var(--steel) 68%, #5a7a90 100%);
+      color: var(--cream);
+      border: 0;
+      border-radius: calc(var(--r) * 4);
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 8px 48px rgba(12,18,32,.28);
+    }
+
+    /* Dawn glow at base */
+    .hero::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 48%;
+      background: linear-gradient(to top, rgba(200,136,42,.16), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Scan-line texture */
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent, transparent 3px,
+        rgba(255,255,255,.016) 3px, rgba(255,255,255,.016) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Remove fold corner on hero */
+    .hero > *:not(.hero-actions) { position: relative; z-index: 1; }
+    .hero .hero-actions { position: relative; z-index: 1; }
+
+    .hero h1 {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -.05em;
+      margin-bottom: 1.1rem;
+    }
+
+    .hero p {
+      font-size: 1.05rem;
+      color: rgba(250,240,220,.88);
+      max-width: 580px;
+      line-height: 1.82;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .55rem;
+      margin-top: 1.75rem;
+    }
+
+    .hero button, .hero .btn {
+      background: rgba(250,240,220,.12);
+      color: rgba(255,248,232,1);
+      border: 1px solid rgba(250,240,220,.3);
+      padding: .65rem 1.15rem;
+      border-radius: calc(var(--r) * 2);
+      font-size: .92rem;
+      font-weight: 400;
+      backdrop-filter: blur(6px);
+    }
+
+    .hero button:hover, .hero .btn:hover {
+      background: rgba(250,240,220,.2);
+      border-color: rgba(250,240,220,.38);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 18px rgba(12,18,32,.22);
+    }
+
+    /* ===== SECTION TITLE ===== */
+    .section-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-title h2 {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--midnight);
+      letter-spacing: -.035em;
+      line-height: 1.2;
+    }
+
+    .section-title p {
+      margin-top: .3rem;
+      color: var(--muted);
+      font-size: .93rem;
+    }
+
+    /* ===== GRID ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .85rem;
+    }
+
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    /* ===== CARDS ===== */
+    .card {
+      border: 1px solid var(--line);
+      background: var(--paper-2);
+      border-radius: calc(var(--r) * 3);
+      padding: 1.05rem;
+      transition: transform .2s, box-shadow .2s;
+      min-height: 100px;
+    }
+
+    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+    .card h3 {
+      font-family: 'Nanum Myeongjo', serif;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--midnight);
+      margin-bottom: .38rem;
+      letter-spacing: -.02em;
+    }
+
+    .card p {
+      color: var(--ink);
+      font-size: .92rem;
+      line-height: 1.68;
+      margin: .2rem 0;
+    }
+
+    .card button {
+      margin-top: .8rem;
+      background: var(--midnight);
+      color: var(--cream);
+      border: none;
+      padding: .48rem 1rem;
+      border-radius: var(--r);
+      font-size: .88rem;
+      cursor: pointer;
+    }
+
+    .card button:hover { opacity: .82; transform: translateY(-1px); }
+
+    /* ===== TAGS ===== */
+    .tag-row { display: flex; flex-wrap: wrap; gap: .32rem; margin-top: .65rem; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: .22rem;
+      padding: .25rem .6rem;
+      border-radius: 999px;
+      background: var(--tag-bg);
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .74rem;
+      letter-spacing: .01em;
+      border: 1px solid var(--line);
+    }
+
+    /* ===== ESSAY / OPENING LETTER ===== */
+    .essay-note {
+      background: linear-gradient(135deg, rgba(12,18,32,.06), rgba(200,136,42,.08));
+      border-left: 4px solid var(--gold);
+    }
+
+    .pullquote {
+      margin: 1.2rem 0;
+      padding: 1.4rem 1.5rem;
+      background: var(--midnight);
+      color: var(--cream);
+      border-radius: calc(var(--r) * 3);
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.55;
+      letter-spacing: -.03em;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .essay-body {
+      display: grid;
+      gap: .85rem;
+      margin-top: 1rem;
+    }
+
+    .essay-body p {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.02rem;
+      line-height: 1.9;
+      color: var(--ink);
+    }
+
+    .essay-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin: .8rem 0 1rem;
+    }
+
+    /* ===== TIMELINE ===== */
+    .timeline {
+      position: relative;
+      padding-left: 1.5rem;
+      border-left: 2px solid var(--gold);
+      display: grid;
+      gap: .7rem;
+    }
+
+    .event {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: calc(var(--r) * 2);
+      padding: .8rem 1rem;
+      position: relative;
+    }
+
+    .event::before {
+      content: '';
+      position: absolute;
+      left: -1.78rem; top: 1rem;
+      width: 8px; height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+      border: 2px solid var(--paper);
+      box-shadow: 0 0 0 1px var(--gold);
+    }
+
+    .event strong {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .76rem;
+      color: var(--brick);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: .22rem;
+    }
+
+    /* ===== META TABLE ===== */
+    .meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .87rem;
+      border-radius: calc(var(--r) * 2);
+      overflow: hidden;
+    }
+
+    .meta-table th, .meta-table td {
+      border-bottom: 1px solid var(--line);
+      padding: .75rem 1rem;
+      vertical-align: top;
+      text-align: left;
+      font-size: .93rem;
+    }
+
+    .meta-table th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .76rem;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--paper-2);
+      width: 160px;
+      font-weight: 500;
+    }
+
+    .meta-table tr:last-child th,
+    .meta-table tr:last-child td { border-bottom: none; }
+
+    /* ===== NOTICE ===== */
+    .notice {
+      border-left: 4px solid var(--brick);
+      background: rgba(138,53,48,.035);
+    }
+
+    .notice h2 {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.1rem;
+      color: var(--brick) !important;
+      margin-bottom: .75rem;
+    }
+
+    .notice h3 {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+      color: var(--brick);
+      margin: 1rem 0 .38rem;
+      font-weight: 500;
+    }
+
+    .notice ul {
+      padding-left: 1.15rem;
+      color: var(--ink);
+      font-size: .92rem;
+      line-height: 1.85;
+    }
+
+    /* ===== PLACEHOLDER ===== */
+    .placeholder {
+      border-style: dashed;
+      color: var(--muted);
+      background: rgba(255,255,255,.38);
+    }
+
+    /* ===== SEARCH ===== */
+    .search-box {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      margin-top: .75rem;
+      align-items: center;
+    }
+
+    .search-box input, select {
+      border: 1px solid var(--line);
+      border-radius: calc(var(--r) * 2);
+      padding: .68rem .95rem;
+      background: var(--cream);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: .95rem;
+      font-weight: 400;
+      min-width: 220px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(200,136,42,.12);
+    }
+
+    /* ===== MISC ===== */
+    .muted { color: var(--muted); }
+
+    /* Panel headings */
+    .panel > h2 {
+      font-family: 'Nanum Myeongjo', serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--midnight);
+      letter-spacing: -.03em;
+      margin-bottom: .8rem;
+    }
+
+    .panel > h3 {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.1rem;
+      color: var(--midnight);
+      letter-spacing: -.02em;
+      margin: 1.3rem 0 .5rem;
+    }
+
+    /* Back button in detail panels */
+    .panel > button:first-child {
+      background: var(--paper-2);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: .4rem .85rem;
+      border-radius: var(--r);
+      font-size: .8rem;
+      margin-bottom: .5rem;
+    }
+
+    .panel > button:first-child:hover { color: var(--ink); background: var(--tag-bg); transform: none; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      max-width: 1200px;
+      margin: 0 auto 2.5rem;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .qa-list {
+      margin: .65rem 0 0;
+      padding-left: 1.3rem;
+      color: var(--ink);
+      font-size: .95rem;
+      line-height: 1.9;
+    }
+
+    /* ===== MOBILE SELECT ===== */
+    .mobile-select {
+      display: none;
+      width: 100%;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--line);
+      border-radius: calc(var(--r) * 2);
+      padding: .68rem .9rem;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: .85rem;
+      background: var(--cream);
+      color: var(--ink);
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      header { top: 28px; }
+      .header-inner { flex-direction: column; gap: .55rem; padding: .75rem 1.25rem; }
+      .top-nav { justify-content: flex-start; }
+      .container { grid-template-columns: 1fr; padding: 1.25rem 1.25rem 4rem; }
+      aside { position: static; display: none; }
+      .mobile-select { display: block; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.two { grid-template-columns: 1fr; }
+      .hero { padding: 2.5rem 1.75rem; }
+      .panel { padding: 1.35rem; }
+    }
+
+    @media (max-width: 560px) {
+      .grid, .grid.two { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+      .hero { padding: 2rem 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">Demo / Prototype — 실제 기능은 작동하지 않습니다. 모든 데이터는 화면 검증용 Mock Data입니다.</div>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <strong>노래모임 새벽의 아카이브</strong>
+        <span>1984–1994 · 그리고 그 이후의 이야기</span>
+      </div>
+      <nav class="top-nav" id="topNav" aria-label="상단 메뉴"></nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside aria-label="좌측 서브메뉴">
+      <h2 id="sideTitle">섹션 메뉴</h2>
+      <nav class="side-nav" id="sideNav"></nav>
+    </aside>
+    <main>
+      <select class="mobile-select" id="mobileSubnav" aria-label="하위 메뉴 선택"></select>
+      <div id="app"></div>
+    </main>
+  </div>
+
+  <footer class="footer panel">
+    <div class="section-title">
+      <div>
+        <h2>QA용 데모 시나리오 3개</h2>
+        <p>브라우저에서 바로 확인할 수 있는 핵심 사용자 경험입니다.</p>
+      </div>
+    </div>
+    <ol class="qa-list">
+      <li>홈에서 "새벽의 시작"으로 이동해 사이트 성격과 역사적 맥락 소개를 확인한다.</li>
+      <li>"새벽 1984~1994" 메뉴에서 1987년을 선택해 연도별 개요·주요 활동·관련 자료 구조를 확인한다.</li>
+      <li>"새벽의 노래 이야기"에서 1기 창작곡 목록을 보고 데모 곡 상세 정보를 확인한다.</li>
+    </ol>
+  </footer>
+
+  <script>
+    const PROTOTYPE_ASSUMPTIONS = [
+      '[프로토타입 가정] 실제 Notion 자료는 연결하지 않고 최소 mock data로 사용자 흐름만 시연합니다.',
+      '[프로토타입 가정] 공개 가능 자료만 노출한다는 원칙을 UI 문구와 상태 배지로만 표현합니다.',
+      '[프로토타입 가정] 토론방과 자료 제보는 외부 링크 안내 UI로만 표현하며 실제 전송 기능은 없습니다.'
+    ];
+    const NEEDS_CONFIRMATION = [
+      '[확인 필요] 실제 노션 자료 구조와 데이터베이스/페이지 구분',
+      '[확인 필요] 음원·악보·사진·기사의 저작권 및 공개 범위',
+      '[확인 필요] 멤버별 스토리 공개 동의 여부와 표시 범위',
+      '[확인 필요] 새벽 1기·2기 구분 기준과 곡별 메타데이터'
+    ];
+
+    const menus = [
+      { id:'home', label:'홈', subs:[] },
+      { id:'about', label:'노래모임 새벽은 누구?', subs:[{id:'opening', label:'아카이브를 여는 글'}, {id:'beginning', label:'새벽의 시작'}, {id:'history', label:'새벽의 연혁'}] },
+      { id:'years', label:'새벽 1984~1994', subs:Array.from({length:11}, (_,i)=>({id:String(1984+i), label:`${1984+i}년`})) },
+      { id:'songs', label:'새벽의 노래 이야기', subs:[{id:'gen1', label:'새벽 1기 창작곡'}, {id:'gen2', label:'새벽 2기 창작곡'}] },
+      { id:'epilogue', label:'그 이후 챕터와 에필로그', subs:[{id:'after', label:'새벽 해체 이후 이야기'}, {id:'members', label:'새벽 멤버별 스토리'}] },
+      { id:'discussion', label:'(임시) 사이트 개발에 대한 토론방', subs:[{id:'notices', label:'공지사항'}, {id:'menu-feedback', label:'메뉴에 대한 토론방'}, {id:'feedback-form', label:'의견·자료 제보 Form'}] }
+    ];
+
+    const founderEssay = [
+      '누군가가 묻는다. <새벽>을 창립한 동기는 무엇이었습니까? 아마 나는 이렇게 대답할 것이다. ‘터무니없음’이 불러온 분노가 아니었을까요?',
+      '좋은 노래를 만들고 부르고 퍼뜨린다 해서 군사독재가 사라지리라 여겼을 리 없었을 것이고, 그러니 <새벽>이라는 전업적 노래운동 단체의 목적이 ‘군사독재 척결’ 같은 거창한 것이 될 수 없음 또한 자명했을 터이다.',
+      '당시 구성원들의 마음속 가장 깊은 곳에 무엇이 감춰져 있었는지를 되짚어 보지 않을 수 없겠는데요. 이를테면 그것은…… ‘그렇게 존재하기’ 같은 것이지 않았나 생각됩니다.',
+      '<새벽>을 만들고 그에 참여할 구성원들을 찾고 규합하는 과정은, 조금 강하게는 ‘무어라도 해야 한다’라는 의지, 그보다 약하게는 ‘나의 미력이라도 보태자’라는 성심, 그보다 더 약하게는 ‘그냥 그러저러하게라도 살자’라는 태도 같은 것들을 차근차근 쌓고 모아 가는 과정에 다름 아니었을 겁니다.',
+      '<새벽>은 운동적 가치 이외에는, ‘내가 아닌 가치, 나의 밖에 있는 가치, 나라는 자의식이 저절로 지워지게 하는 가치’ 이외에는 그 어떤 지향점도 갖고 있지 않았다는 바로 그 사실이야말로 <새벽>의 출발점이자 종착점이었다고 말하고 싶습니다.',
+      '그 ‘순수성’이 <새벽>이 거둔 성공의 든든한 기초 자산이었을 것이고, 사회운동・민주화운동에 일말의 사전 지식도 없는 일반 시민 대중들이 무의식적으로, 그러나 인상 깊게 감지했을 것이라고 생각합니다.',
+      '나는 <새벽>이 ‘아마추어리즘의 승리’, ‘매우 희귀한 문화사적 사례’라 해도 좋을 호응을 얻은 원인을 이렇게 짚고 싶습니다. ‘우리는 음악 예술가이고 그래서 음악으로 성공하고야 말겠다’는 그 어떤 사적 의지나 집착 같은 것이 <새벽>에는 없었다는 점입니다.',
+      'artist-art, 예술가 예술과 activist-art, 활동가 예술의 차이. <새벽>이 그 차이를 의식하거나 의도한 것은 전혀 아니었지만, 그 차이야말로 ‘그렇게 존재하기’라는 순수한 내적・내면적 목적만으로 규합된 <새벽>이 비교 불가능한 운동적 성과와 대중적 성공을 거둘 수 있었던 본질적인 원인이 됐을지 모른다고 추정해 봅니다.',
+      '40여 년이 지난 지금 2025년에 이 판단을 내리는 이유가 있습니다. 혼돈・증오, 나아가 유사 광기로 가득한 이 세계를 살아 내야 하는 우리와 우리 후손들이 과연 어찌 사는 것이 맞는지, 이 시대에도 ‘그렇게 존재하기’ 같은 것이 있는지 다시 묻고 싶은 압박감이 좀처럼 잦아들지 않기 때문입니다.',
+      '‘무목적의 목적’을 품은 순수 문화예술활동가들이 다시금 이 힘든 시대를 살아가는 수많은 사람들에게 작지만 새로운 희망 같은 걸 보여 줄 수 있다면 정말 좋을 것 같다는 상상과 바람이 날로 강렬해져 가고 있습니다.',
+      '요즈음의 사회운동을 지켜보고 있노라면, ‘여러분, 우리가 지향하는 세상은 이렇게 아름다운 것입니다’라고 말하는 사람이 보이질 않습니다. 감동은 진즉 사라졌고, 이제 감동 같은 건 필요 없다고 말하는 것처럼 느껴지기도 합니다.',
+      '<노래모임 새벽>은 출발부터 해체까지 관객은 언제나 무죄이고, 운동은 언제나 소비자 중심주의를 기치로 삼아야 한다는 정신을 견지해 냈다고 나는 확신합니다. 그 접근법이야말로 콘텐츠를 끊임없이 갈고 닦게 만드는 강력한 엔진으로 작동하기 때문입니다.',
+      '그러니 이제 정말 ‘그렇게 존재하기’를 호출해야 하는 건 아닌지, 정말 그 길뿐인지, 늦은 밤에도 쉼 없이 뇌리를 어지럽히는 수많은 생각들이 지금 눈앞에서, 여름밤 반딧불이처럼 아름답고도 힘겹게 점멸하고 있습니다.'
+    ];
+
+    const dawnHistory = [
+      { date:'1984', title:'노래모임 새벽 창립', desc:'문승현과 표신중을 중심으로 서울대 메아리, 이화여대 한소리, 고려대 노래얼, 성균관대 소리사랑 졸업생들이 모여 졸업 이후의 노래운동을 이어가기 위해 새벽을 창립했습니다.', tags:['창립','대학 노래패 출신'] },
+      { date:'1984 봄', title:'노래이야기 형식과 「가지꽃」 공연', desc:'한돌의 노래들을 이야기 낭송과 노래로 엮은 노래이야기 형식의 공연을 애오개소극장에서 진행했습니다.', tags:['애오개소극장','노래이야기'] },
+      { date:'1984 가을', title:'노래극 「또다시 들을 빼앗겨」', desc:'전두환 방일 국면을 배경으로 노래, 연기, 낭송, 슬라이드를 결합한 종합 퍼포먼스를 국민대와 전주 정동성당에서 공연했습니다.', tags:['노래극','이 산하에'] },
+      { date:'1984.10', title:'「노래를 찾는 사람들 1집」 참여', desc:'김민기가 기획·제작한 첫 합법 음반에 새벽으로 분화되기 전 대학 노래 동아리 구성원들이 두루 참여했습니다.', tags:['합법 음반','노찾사 1집'] },
+      { date:'1985.1~2', title:'테이프 「민주주의여 만세」', desc:'성문밖교회 지하에서 녹음된 새벽의 첫 비합법 노래 테이프로, 전국 대학 노래운동 확산과 새벽의 대중적 인지에 큰 계기가 되었습니다.', tags:['비합법 테이프','민중문화운동협의회'] },
+      { date:'1985~1986', title:'조직 확대와 음악 학습', desc:'초기 구성 재편 이후 81·82학번 졸업생과 재학생 음악 활동가들이 합류했고, 시창·청음·화성법·음악사 학습을 조직적으로 진행했습니다.', tags:['조직 확대','효정 음악학원'] },
+      { date:'1986', title:'노래극 「부설학교」와 테이프 「그날이 오면」', desc:'상도동 작업실에서 오디오 뮤지컬 형식의 「부설학교」를 제작했고, 「그날이 오면」 테이프를 통해 새벽의 창작곡과 이름이 널리 알려졌습니다.', tags:['사계','귀례 이야기','그날이 오면'] },
+      { date:'1987 봄~가을', title:'무대 뮤지컬과 대중 공연 확장', desc:'「신이수일과 심순애」, 여의도 백인회관 공연, 「해방의 노래」 제작을 거치며 합법 공간의 시민 공연과 투쟁가·창작곡의 확산이 함께 이루어졌습니다.', tags:['백인회관','해방의 노래','광야에서'] },
+      { date:'1987', title:'「노래를 찾는 사람들」 창립 공연 주도', desc:'문승현의 제안으로 일반 시민 대상 노래운동 단체 노찾사가 발족했고, 새벽 구성원들은 음악감독과 반주 세션으로 창립 공연을 주도했습니다.', tags:['노찾사','기독교백주년기념관'] },
+      { date:'1987 겨울', title:'노래극 「평온한 저녁을 위하여」', desc:'6월 항쟁과 노동자 대투쟁 이후 노동자의 삶과 노동 현장을 중심 소재로 삼아 공동창작 노래극을 제작했습니다.', tags:['노동 현장','저 평등의 땅에'] },
+      { date:'1988~1989', title:'민중문화의 날과 노동자문화예술운동연합', desc:'「민중이 주인 되는 세상」, 「저 평등의 땅에」, 「우리, 노동자」 등을 통해 대규모 공연과 노동 현장 노래운동으로 활동이 확장되었습니다.', tags:['민중문화의 날','우리 노동자','노문연'] },
+      { date:'1991', title:'「언제나 시작은 눈물로」와 「바리케이트」', desc:'전교조 의뢰 합법 음반과 세계 노동절 기념 공연을 통해 기존 활동의 축적과 새로운 창작 동력을 다시 공연화했습니다.', tags:['전교조','세계 노동절','바리케이트'] },
+      { date:'1992', title:'윤선애 공연과 작은 음악회', desc:'운동 환경 변화와 운영 위기 속에서 윤선애 솔로 콘서트, 세 차례의 작은 음악회, 장기 공연 「아름다운 생애」를 통해 새로운 음악적 방향을 모색했습니다.', tags:['윤선애','작은 음악회','아름다운 생애'] },
+      { date:'1993 겨울', title:'「러시아에 관한 명상」과 공식 활동 마감', desc:'학전소극장에서 열린 마지막 공식 공연 이후 새벽은 소소한 초청 공연을 제외하고 공식 활동을 마감하게 됩니다.', tags:['학전소극장','마지막 공식 공연'] }
+    ];
+
+    const years = {
+      1984: { summary:'[데모] 새벽의 결성과 초기 문제의식을 소개하는 연도 페이지 예시입니다.', events:['결성 배경과 초기 활동 방향 정리', '노래운동의 시대적 맥락 수집'], songs:['데모곡 A'], assets:['초기 모임 사진 [확인 필요]'] },
+      1987: { summary:'[데모] 사회적 격변기 속에서 공연·문화제·창작 활동의 관계를 보여주는 핵심 예시 연도입니다.', events:['주요 공연/문화제 참여 기록 [확인 필요]', '해당 시기 창작곡과 구술 증언 연결'], songs:['그날이 오면 [데모]', '함께 가자 우리 이 길을 [데모]'], assets:['공연 포스터 [데모]', '팸플릿 이미지 [데모]'] },
+      1994: { summary:'[데모] 새벽 활동의 말기 또는 전환기를 기록하는 페이지 예시입니다.', events:['활동 종료/전환 관련 자료 정리 [확인 필요]', '해체 이후 이야기로 이어지는 연결'], songs:['마지막 기록 [데모]'], assets:['회고문 일부 [데모]'] }
+    };
+
+    const FEEDBACK_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe0TdXZGw8qwBNmmIX31SyFzAFFLlpVWogWDNm-6Ct7ntt1eg/viewform?usp=publish-editor';
+    const BOARD_URL = '#'; // TODO: 실제 게시판 서비스 URL로 교체. 예: GitHub Discussions, Discourse, Naver Cafe 등
+
+    const boardPosts = [
+      { status:'공지', title:'토론방 운영 원칙 안내', author:'운영자', date:'2026-05-17', comments:2, excerpt:'메뉴 구조, 자료 분류, 공개 범위에 대한 의견을 자유롭게 남겨주세요. 개인정보와 비공개 자료는 본문에 직접 올리지 말아주세요.' },
+      { status:'토론', title:'연도별 페이지에서 공연과 테이프를 어떻게 나눌까요?', author:'운영자', date:'2026-05-17', comments:4, excerpt:'1984~1994 연혁을 연도별로 나눌 때 공연, 음반/테이프, 조직 변화, 사회적 사건을 어떤 순서로 배치할지 의견을 받습니다.' },
+      { status:'제안', title:'곡 상세 페이지에 “관련 기억” 영역을 넣자는 제안', author:'방문자', date:'2026-05-17', comments:1, excerpt:'곡별로 가사와 해설뿐 아니라 당시 공연 기억, 참여자 코멘트, 후대의 기억을 함께 모으면 좋겠습니다.' }
+    ];
+
+    const songs = [
+      { slug:'demo-song-1', title:'그날이 오면 [데모]', generation:'1기', lyricist:'[확인 필요]', composer:'[확인 필요]', year:'1987 [확인 필요]', hasAudio:'권리 확인 필요', hasScore:'권리 확인 필요', commentary:'[데모] 곡의 시대적 맥락, 공연 기억, 가사 해석이 들어갈 상세 페이지 예시입니다.', status:'공개 예시' },
+      { slug:'demo-song-2', title:'함께 가자 우리 이 길을 [데모]', generation:'1기', lyricist:'[확인 필요]', composer:'[확인 필요]', year:'1987 [확인 필요]', hasAudio:'없음/확인 필요', hasScore:'있음 [확인 필요]', commentary:'[데모] 작사·작곡 정보와 관련 연도/인물을 연결하는 흐름을 시연합니다.', status:'공개 예시' },
+      { slug:'demo-song-3', title:'새벽길 [데모]', generation:'2기', lyricist:'[확인 필요]', composer:'[확인 필요]', year:'1990 [확인 필요]', hasAudio:'있음 [확인 필요]', hasScore:'없음/확인 필요', commentary:'[데모] 2기 창작곡 목록과 상세 카드의 표시 방식을 보여줍니다.', status:'공개 예시' }
+    ];
+
+    let state = { section:'home', sub:null, selectedSong:null, role:'일반 방문자' };
+
+    function setRoute(section, sub=null, song=null) {
+      state.section = section;
+      state.sub = sub || (menus.find(m=>m.id===section)?.subs[0]?.id ?? null);
+      state.selectedSong = song;
+      render();
+      window.location.hash = [section, state.sub, song].filter(Boolean).join('/');
+    }
+
+    function parseHash() {
+      const [section, sub, song] = location.hash.replace('#','').split('/');
+      if (section) {
+        state.section = section;
+        state.sub = sub || (menus.find(m=>m.id===section)?.subs[0]?.id ?? null);
+        state.selectedSong = song || null;
+      }
+    }
+
+    function renderTopNav() {
+      const nav = document.getElementById('topNav');
+      nav.innerHTML = menus.map(m => `<button class="${state.section===m.id?'active':''}" onclick="setRoute('${m.id}')">${m.label}</button>`).join('');
+    }
+
+    function renderSideNav() {
+      const menu = menus.find(m=>m.id===state.section) || menus[0];
+      document.getElementById('sideTitle').textContent = menu.label === '홈' ? '빠른 이동' : menu.label;
+      const items = menu.id === 'home'
+        ? [{id:'home', label:'홈'}, {id:'about', label:'아카이브를 여는 글'}, {id:'years', label:'연도별 활동 보기'}, {id:'songs', label:'새벽의 노래 보기'}]
+        : menu.subs;
+      document.getElementById('sideNav').innerHTML = items.map(item => {
+        const targetSection = menu.id === 'home' && item.id !== 'home' ? item.id : menu.id;
+        const targetSub = menu.id === 'home' ? null : item.id;
+        const active = state.sub === item.id || (state.section === item.id);
+        return `<button class="${active?'active':''}" onclick="setRoute('${targetSection}', ${targetSub?`'${targetSub}'`:'null'})">${item.label}</button>`;
+      }).join('');
+      const mobile = document.getElementById('mobileSubnav');
+      mobile.innerHTML = items.map(item => `<option value="${item.id}" ${state.sub===item.id?'selected':''}>${item.label}</option>`).join('');
+      mobile.onchange = () => {
+        const val = mobile.value;
+        if (menu.id === 'home') setRoute(val);
+        else setRoute(menu.id, val);
+      };
+    }
+
+    function assumptionsPanel() {
+      return `<section class="panel notice">
+        <h2>구현 전 요약 / 범위 표시</h2>
+        <div class="grid two">
+          <div><h3 style="font-family:'Nanum Myeongjo',serif;font-size:.95rem;color:var(--midnight);margin-bottom:.3rem;">문제 정의</h3><p style="color:var(--muted);font-size:.83rem;">노션에 흩어져 있는 새벽 관련 자료를 방문자가 연도·곡·인물·자료 기준으로 탐색하기 어려우므로, 독립 웹 아카이브 UX를 검증합니다.</p></div>
+          <div><h3 style="font-family:'Nanum Myeongjo',serif;font-size:.95rem;color:var(--midnight);margin-bottom:.3rem;">주요 사용자</h3><p style="color:var(--muted);font-size:.83rem;">일반 방문자, 새벽 멤버/관계자, 연구자/기록자, 자료 제공자, 사이트 운영자.</p></div>
+          <div><h3 style="font-family:'Nanum Myeongjo',serif;font-size:.95rem;color:var(--midnight);margin-bottom:.3rem;">핵심 기능 1~3개</h3><p style="color:var(--muted);font-size:.83rem;">① 새벽 소개 ② 1984~1994 연도별 탐색 ③ 창작곡 목록/상세 탐색.</p></div>
+          <div><h3 style="font-family:'Nanum Myeongjo',serif;font-size:.95rem;color:var(--midnight);margin-bottom:.3rem;">답변/표시 가능 범위</h3><p style="color:var(--muted);font-size:.83rem;">PRD/기획 문서에 있는 공개 아카이브 구조, 메뉴, 메타데이터, 데모 콘텐츠 흐름만 표시합니다.</p></div>
+          <div><h3 style="font-family:'Nanum Myeongjo',serif;font-size:.95rem;color:var(--midnight);margin-bottom:.3rem;">금지/에스컬레이션 범위</h3><p style="color:var(--muted);font-size:.83rem;">실제 저작권 판단, 비공개 자료 열람, 개인정보 표시, 실제 노션/API 연동, 파일 업로드, 로그인은 구현하지 않습니다.</p></div>
+          <div><h3 style="font-family:'Nanum Myeongjo',serif;font-size:.95rem;color:var(--midnight);margin-bottom:.3rem;">필요 화면</h3><p style="color:var(--muted);font-size:.83rem;">홈, 새벽의 시작, 연도별 페이지, 곡 목록/상세, 에필로그, 공지/토론 안내.</p></div>
+        </div>
+        <h3>[프로토타입 가정]</h3><ul>${PROTOTYPE_ASSUMPTIONS.map(x=>`<li>${x}</li>`).join('')}</ul>
+        <h3>[확인 필요]</h3><ul>${NEEDS_CONFIRMATION.map(x=>`<li>${x}</li>`).join('')}</ul>
+      </section>`;
+    }
+
+    function renderHome() {
+      return `<section class="panel hero">
+        <h1>노래로 남은 시대,<br />기억으로 다시 여는 새벽.</h1>
+        <p>1984년부터 1994년까지, 노래로 시대를 기록한 사람들의 기억과 자료를 모읍니다.</p>
+        <div class="hero-actions">
+          <button onclick="setRoute('about','opening')">아카이브를 여는 글</button>
+          <button onclick="setRoute('about','beginning')">새벽은 누구?</button>
+          <button onclick="setRoute('years','1987')">연도별 활동 보기</button>
+          <button onclick="setRoute('songs','gen1')">새벽의 노래 보기</button>
+          <button onclick="setRoute('discussion','menu-feedback')">자료 제보/토론 참여</button>
+        </div>
+      </section>
+      ${assumptionsPanel()}
+      <section class="panel">
+        <div class="section-title"><div><h2>빠른 진입</h2><p>PRD의 주요 섹션을 카드로 탐색합니다.</p></div></div>
+        <div class="grid">
+          ${card('아카이브를 여는 글', '창립자 문승현이 아카이브 신설을 축하하며 보내온 글을 읽습니다.', 'about','opening')}
+          ${card('새벽의 시작', '결성 배경, 시대적 맥락, 활동 방향을 확인합니다.', 'about','beginning')}
+          ${card('새벽의 연혁', '1984~1993년 주요 공연·테이프·조직 변화를 한 흐름으로 봅니다.', 'about','history')}
+          ${card('새벽 1984~1994', '연도별 활동, 그해의 노래, 자료실 구조를 확인합니다.', 'years','1984')}
+          ${card('새벽의 노래 이야기', '1기·2기 창작곡 목록과 상세 페이지 흐름을 봅니다.', 'songs','gen1')}
+          ${card('그 이후 챕터', '해체 이후 이야기와 멤버별 스토리 구조를 확인합니다.', 'epilogue','after')}
+          ${card('공지사항', '사이트 개발 진행과 자료 수집 안내를 확인합니다.', 'discussion','notices')}
+          ${card('메뉴에 대한 토론방', '게시글과 댓글이 오가는 일반 게시판 형태의 토론 공간입니다.', 'discussion','menu-feedback')}
+          ${card('의견·자료 제보 Form', '자료 제보와 오류 신고는 Google Form으로 접수합니다.', 'discussion','feedback-form')}
+        </div>
+      </section>
+      <section class="panel"><h2>오늘의 아카이브 / 최근 업데이트 [데모]</h2>
+        <div class="grid">
+          <div class="card"><h3>아카이브를 여는 글</h3><p>“그렇게 존재하기” — 창립자 문승현의 축하글과 현재적 질문을 소개합니다.</p><button onclick="setRoute('about','opening')">글 읽기</button></div>
+          <div class="card"><h3>추천 연도: 1987년</h3><p>사회적 격변기와 새벽의 활동을 연결해 보는 데모 페이지입니다.</p><button onclick="setRoute('years','1987')">1987년 보기</button></div>
+          <div class="card"><h3>대표곡: 그날이 오면 [데모]</h3><p>곡 기본 정보, 해설, 권리 상태 표시를 시연합니다.</p><button onclick="setRoute('songs','gen1','demo-song-1')">곡 상세 보기</button></div>
+        </div>
+      </section>`;
+    }
+
+    function card(title, desc, section, sub) {
+      return `<div class="card"><h3>${title}</h3><p>${desc}</p><button onclick="setRoute('${section}','${sub}')">이동</button></div>`;
+    }
+
+    function renderOpening() {
+      return `<section class="panel"><div class="section-title"><div><h2>아카이브를 여는 글</h2><p>창립자 문승현이 「노래모임 새벽의 아카이브」 신설을 축하하며 보내온 글입니다.</p></div><span class="tag">창립자의 글</span></div>
+        <div class="essay-meta"><span class="tag">문승현</span><span class="tag">2025.10.01</span><span class="tag">축하글 / 에세이</span><span class="tag">출처: Notion 원문</span></div>
+        <div class="card essay-note"><h3>편집자 소개</h3><p>이 글은 새벽의 창립 동기와 활동의 내적 의미를 회고하며, 새벽을 단지 과거의 단체가 아니라 오늘 다시 물어야 할 태도와 실천의 이름으로 읽게 합니다. 특히 글 속의 표현 “그렇게 존재하기”는 이 아카이브 전체를 여는 핵심 문장으로 배치했습니다.</p></div>
+        <blockquote class="pullquote">“그렇게 존재하기”<br><span style="font-size:.95rem;font-weight:400;opacity:.8">— 문승현, 〈노래모임 새벽〉 아카이브 신설을 축하하며</span></blockquote>
+        <div class="grid two" style="margin:1rem 0">
+          <div class="card"><h3>이 글이 놓일 자리</h3><p>공지사항이 아니라 사이트의 입구인 “노래모임 새벽은 누구?” 섹션 맨 앞에 둡니다. 방문자가 새벽을 사실 정보 이전에 하나의 태도와 문제의식으로 만나게 하기 위함입니다.</p></div>
+          <div class="card"><h3>함께 읽을 글</h3><p>이 글을 읽은 뒤 “새벽의 시작”과 “새벽의 연혁”으로 이어지도록 배치합니다. 창립자의 현재적 해석 → 기본 소개 → 역사 자료의 순서입니다.</p></div>
+        </div>
+        <h3>본문 발췌</h3>
+        <div class="essay-body">${founderEssay.map(p=>`<p>${p}</p>`).join('')}</div>
+        <div class="card" style="margin-top:1rem"><h3>원문과 공개 기준</h3><p>현재 프로토타입에는 웹 화면에 맞게 정리한 발췌/요약 본문을 표시했습니다. 정식 사이트에서는 작성자 동의와 교열 확인 후 전문을 수록하고, 원문 Notion 링크와 작성일을 함께 표기하는 것을 권장합니다.</p><a class="btn primary" href="https://www.notion.so/27f6a49058e380c797c3f25c469979a1" target="_blank" rel="noopener">Notion 원문 열기</a></div>
+      </section>`;
+    }
+
+    function renderAbout() {
+      if (state.sub === 'opening') return renderOpening();
+      if (state.sub === 'history') return renderHistory();
+      return `<section class="panel"><div class="section-title"><div><h2>새벽의 시작</h2><p>처음 방문한 사람이 새벽을 이해하기 위한 입문 페이지입니다.</p></div><span class="tag">출처: 기획/PRD</span></div>
+        <p><strong>[데모 본문]</strong> 노래모임 새벽의 결성 배경, 1980년대 한국 사회와 노래운동의 흐름, 음악적 지향과 활동 방식을 설명하는 영역입니다.</p>
+        <div class="grid two" style="margin-top:1rem">
+          <div class="card"><h3>결성 배경</h3><p>[확인 필요] 실제 결성 연도, 참여자, 초기 문제의식은 노션 원천 자료 확인 후 반영합니다.</p></div>
+          <div class="card"><h3>시대적 맥락</h3><p>1980년대 사회운동과 문화운동, 민중가요 흐름 속에서 새벽의 위치를 설명합니다.</p></div>
+          <div class="card"><h3>활동 방식</h3><p>공연, 집회/문화제, 창작, 녹음, 내부 모임 등 자료 유형별로 연결합니다.</p></div>
+          <div class="card placeholder"><h3>대표 사진/포스터 영역</h3><p>실제 이미지는 사용하지 않습니다. 공개 가능 자료 확인 후 표시됩니다.</p></div>
+        </div>
+      </section>`;
+    }
+
+    function renderHistory() {
+      return `<section class="panel"><div class="section-title"><div><h2>새벽의 연혁</h2><p>노션 문서 「노래모임새벽연혁(1984_1993)_정리」를 바탕으로 주요 흐름을 요약했습니다.</p></div><span class="tag">출처: Notion / 이현관 글</span></div>
+        <p>새벽의 연혁은 대학 노래 동아리 졸업생들의 결성, 노래극과 비합법 테이프 제작, 노동 현장과 대중 공연으로의 확장, 1990년대 초 새로운 음악적 모색과 공식 활동 마감으로 이어집니다.</p>
+        <div class="grid two" style="margin:1rem 0">
+          <div class="card"><h3>초기 형성</h3><p>서울대 메아리, 이화여대 한소리, 고려대 노래얼, 성균관대 소리사랑 출신들이 졸업 이후에도 노래운동을 이어가기 위해 모였습니다.</p></div>
+          <div class="card"><h3>핵심 축</h3><p>노래극, 테이프 제작, 콘서트, 노동 현장 지원, 노래단 조직과 지도, 창작곡 발표가 시기별로 맞물려 전개되었습니다.</p></div>
+        </div>
+        <h3>주요 연혁</h3>
+        <div class="timeline">${dawnHistory.map(renderHistoryEvent).join('')}</div>
+        <div class="card" style="margin-top:1rem"><h3>검수 메모</h3><p>원문에는 일부 시점 수정 의견과 기억 기반 서술이 포함되어 있습니다. 정식 아카이브 반영 시 날짜, 참여자, 공연 장소, 곡명은 관계자 검수와 출처 병기가 필요합니다.</p></div>
+      </section>`;
+    }
+
+    function renderHistoryEvent(item) {
+      return `<div class="event"><strong>${item.date}</strong><h3>${item.title}</h3><p>${item.desc}</p>${item.tags ? `<div class="tag-row">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>` : ''}</div>`;
+    }
+
+    function renderYear() {
+      const y = Number(state.sub || 1984);
+      const data = years[y] || { summary:'[준비 중] 이 연도의 실제 개요와 주요 활동은 노션 자료 확인 후 채워집니다.', events:['연도별 핵심 사건 목록 확보 필요'], songs:[], assets:[] };
+      return `<section class="panel"><div class="section-title"><div><h2>${y}년</h2><p>그해의 개요, 주요 활동, 노래, 자료, 기억과 증언을 한 화면에서 검토합니다.</p></div><span class="tag">연도별 아카이브</span></div>
+        <h3>그해의 개요</h3><p>${data.summary}</p>
+        <h3>주요 활동 / 사건</h3><div class="timeline">${data.events.map((e,i)=>`<div class="event"><strong>${i+1}</strong> ${e}</div>`).join('')}</div>
+        <div class="grid two" style="margin-top:1rem">
+          <div class="card"><h3>그해의 노래</h3>${data.songs.length ? data.songs.map(s=>`<p>♪ ${s}</p>`).join('') : '<p class="muted">관련 곡 준비 중</p>'}</div>
+          <div class="card"><h3>자료실</h3>${data.assets.length ? data.assets.map(a=>`<p>▧ ${a}</p>`).join('') : '<p class="muted">관련 자료 준비 중</p>'}<div class="tag-row"><span class="tag">출처 표시 필요</span><span class="tag">공개 가능 여부 확인</span></div></div>
+        </div>
+        <div class="card" style="margin-top:1rem"><h3>기억과 증언</h3><p>[확인 필요] 멤버 회고, 당시 관객/참여자 증언, 자료 제공자 코멘트가 들어갈 영역입니다.</p></div>
+      </section>`;
+    }
+
+    function renderSongs() {
+      if (state.selectedSong) return renderSongDetail(state.selectedSong);
+      const gen = state.sub === 'gen2' ? '2기' : '1기';
+      const list = songs.filter(s=>s.generation===gen);
+      return `<section class="panel"><div class="section-title"><div><h2>새벽 ${gen} 창작곡</h2><p>곡명, 기수, 작사/작곡, 연도, 음원/악보 상태를 목록으로 확인합니다.</p></div><span class="tag">Mock data</span></div>
+        <div class="search-box"><input id="songFilter" placeholder="데모 필터: 곡명 입력" oninput="filterSongs()" /><span class="tag">실제 검색/API 없음</span></div>
+        <div id="songList" class="grid" style="margin-top:1rem">${list.map(songCard).join('')}</div>
+      </section>`;
+    }
+
+    function songCard(s) {
+      return `<div class="card song-item" data-title="${s.title}"><h3>${s.title}</h3><p>${s.year} · ${s.generation}</p><div class="tag-row"><span class="tag">음원: ${s.hasAudio}</span><span class="tag">악보: ${s.hasScore}</span></div><button onclick="setRoute('songs','${state.sub}','${s.slug}')">상세 보기</button></div>`;
+    }
+
+    function renderSongDetail(slug) {
+      const s = songs.find(x=>x.slug===slug) || songs[0];
+      return `<section class="panel"><button onclick="setRoute('songs','${s.generation==='2기'?'gen2':'gen1'}')">← 목록으로</button><div class="section-title" style="margin-top:1rem"><div><h2>${s.title}</h2><p>곡 상세 페이지의 정보 배치와 권리 상태 표시를 시연합니다.</p></div><span class="tag">${s.status}</span></div>
+        <table class="meta-table"><tbody>
+          <tr><th>기수</th><td>${s.generation}</td></tr>
+          <tr><th>작사/작곡</th><td>${s.lyricist} / ${s.composer}</td></tr>
+          <tr><th>창작/발표 연도</th><td>${s.year}</td></tr>
+          <tr><th>음원/악보</th><td>음원: ${s.hasAudio}, 악보: ${s.hasScore}</td></tr>
+          <tr><th>저작권/공개 범위</th><td>[확인 필요] 공개 가능 여부 확인 전 실제 파일은 표시하지 않음</td></tr>
+        </tbody></table>
+        <h3>노래 해설</h3><p>${s.commentary}</p>
+        <div class="card placeholder"><h3>가사·악보·음원 영역</h3><p>실제 가사/악보/음원은 권리 확인 후 연결됩니다. 이 프로토타입은 구조만 보여줍니다.</p></div>
+      </section>`;
+    }
+
+    function renderEpilogue() {
+      if (state.sub === 'members') {
+        return `<section class="panel"><h2>새벽 멤버별 스토리</h2><p>[데모] 멤버 프로필, 활동 당시 역할, 이후 활동, 회고문을 카드로 배치하는 목록입니다.</p><div class="grid" style="margin-top:1rem"><div class="card placeholder"><h3>멤버 A [확인 필요]</h3><p>공개 동의 확인 후 표시</p></div><div class="card placeholder"><h3>멤버 B [확인 필요]</h3><p>스토리와 자료 연결 예정</p></div></div></section>`;
+      }
+      return `<section class="panel"><h2>새벽 해체 이후 이야기</h2><p>[데모] 해체 또는 활동 종료의 배경, 이후 민중가요/문화운동의 변화, 새벽의 노래가 이어진 방식을 정리하는 페이지입니다.</p><div class="card" style="margin-top:1rem"><h3>에필로그 구성</h3><p>후속 모임, 공연, 재회, 기념 행사, 현재적 의미를 문단형 콘텐츠로 연결합니다.</p></div></section>`;
+    }
+
+    function renderDiscussion() {
+      if (state.sub === 'feedback-form') {
+        return `<section class="panel"><div class="section-title"><div><h2>의견·자료 제보 Form</h2><p>자료 제보, 오류 신고, 곡·인물·연도 정보 수정 요청은 Google Form으로 접수합니다.</p></div><span class="tag">Google Form</span></div>
+          <div class="card"><h3>의견·자료 제보하기</h3><p>메뉴 구조, 연도별 활동, 곡 정보, 인물 정보, 사진·문서·음원·악보 제보, 오류 신고 등 아카이브를 함께 완성하기 위한 의견을 보내주세요.</p><p>보내주신 내용은 운영자가 검토한 뒤 공지사항 또는 답변 페이지에 정리해 공개할 수 있습니다. 개인정보와 비공개 자료는 동의 없이 공개하지 않습니다.</p><a class="btn primary" href="${FEEDBACK_FORM_URL}" target="_blank" rel="noopener">의견·자료 제보 Form 열기</a></div>
+          <div class="grid two" style="margin-top:1rem"><div class="card"><h3>접수 후 처리</h3><p>Google Sheet에 응답이 저장되며, 운영자가 검토 상태·공개 여부·반영 위치를 관리합니다.</p></div><div class="card"><h3>사이트 반영</h3><p>반영된 내용은 GitHub에 커밋한 뒤 GitHub Actions 배포를 통해 공개 사이트에 반영됩니다.</p></div></div>
+        </section>`;
+      }
+      if (state.sub === 'menu-feedback') {
+        return `<section class="panel"><div class="section-title"><div><h2>메뉴에 대한 토론방</h2><p>게시글을 올리고 댓글로 논의하는 일반 게시판 형태의 공간입니다.</p></div><span class="tag">게시판형 토론</span></div>
+          <div class="card essay-note"><h3>실제 구현 메모</h3><p>정적 사이트에서 자체 게시판을 직접 만들려면 서버, 데이터베이스, 로그인, 스팸 관리가 필요합니다. 가장 값싸고 쉬운 실제 구현은 외부 게시판 서비스를 연결하는 방식입니다. 후보: GitHub Discussions/Giscus, Discourse 무료 호스팅이 가능한 자체 서버, Naver Cafe/Daum Cafe 외부 링크.</p></div>
+          <div class="section-title" style="margin-top:1.2rem"><div><h2 style="font-size:1.25rem">최근 게시글</h2><p>아래 목록은 게시판 화면 형태를 보여주는 예시입니다. 실제 서비스 연결 시 게시글 목록 또는 외부 게시판 링크로 대체됩니다.</p></div><a class="btn primary" href="${BOARD_URL}">글쓰기</a></div>
+          <div class="timeline">${boardPosts.map(renderBoardPost).join('')}</div>
+        </section>`;
+      }
+      return `<section class="panel"><h2>공지사항</h2><div class="grid two" style="margin-top:.75rem"><div class="card"><h3>사이트 개발 진행 상황 [데모]</h3><p>프로토타입은 프론트엔드 화면 검증용입니다.</p></div><div class="card"><h3>자료 수집 안내 [데모]</h3><p>자료 제보 방식과 저작권 확인 절차는 별도 확정이 필요합니다.</p></div></div></section>`;
+    }
+
+    function renderBoardPost(post) {
+      return `<div class="event"><strong>${post.status} · ${post.date}</strong><h3>${post.title}</h3><p>${post.excerpt}</p><div class="tag-row"><span class="tag">작성자: ${post.author}</span><span class="tag">댓글 ${post.comments}</span></div></div>`;
+    }
+
+    function filterSongs() {
+      const q = document.getElementById('songFilter').value.trim().toLowerCase();
+      document.querySelectorAll('.song-item').forEach(el => {
+        el.style.display = el.dataset.title.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    function render() {
+      renderTopNav();
+      renderSideNav();
+      const app = document.getElementById('app');
+      if (state.section === 'home')       app.innerHTML = renderHome();
+      if (state.section === 'about')      app.innerHTML = renderAbout();
+      if (state.section === 'years')      app.innerHTML = renderYear();
+      if (state.section === 'songs')      app.innerHTML = renderSongs();
+      if (state.section === 'epilogue')   app.innerHTML = renderEpilogue();
+      if (state.section === 'discussion') app.innerHTML = renderDiscussion();
+    }
+
+    window.setRoute = setRoute;
+    window.filterSongs = filterSongs;
+    window.addEventListener('hashchange', () => { parseHash(); render(); });
+    parseHash();
+    render();
+  </script>
+</body>
+</html>
