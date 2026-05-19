@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "description": "노래모임 새벽 아카이브 프로토타입 데이터 매니페스트",
+  "files": {
+    "assumptions": "./data/assumptions.json",
+    "navigation": "./data/navigation.json",
+    "opening": "./data/opening.json",
+    "years": "./data/years.json",
+    "originalTexts": "./data/original-texts.json",
+    "discussion": "./data/discussion.json",
+    "songs": "./data/songs.json"
+  }
+}

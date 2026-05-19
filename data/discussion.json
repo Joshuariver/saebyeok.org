@@ -1,0 +1,30 @@
+{
+  "FEEDBACK_FORM_URL": "https://docs.google.com/forms/d/e/1FAIpQLSe0TdXZGw8qwBNmmIX31SyFzAFFLlpVWogWDNm-6Ct7ntt1eg/viewform?usp=publish-editor",
+  "BOARD_URL": "#",
+  "boardPosts": [
+    {
+      "status": "공지",
+      "title": "토론방 운영 원칙 안내",
+      "author": "운영자",
+      "date": "2026-05-17",
+      "comments": 2,
+      "excerpt": "메뉴 구조, 자료 분류, 공개 범위에 대한 의견을 자유롭게 남겨주세요. 개인정보와 비공개 자료는 본문에 직접 올리지 말아주세요."
+    },
+    {
+      "status": "토론",
+      "title": "연도별 페이지에서 공연과 테이프를 어떻게 나눌까요?",
+      "author": "운영자",
+      "date": "2026-05-17",
+      "comments": 4,
+      "excerpt": "1984~1994 연혁을 연도별로 나눌 때 공연, 음반/테이프, 조직 변화, 사회적 사건을 어떤 순서로 배치할지 의견을 받습니다."
+    },
+    {
+      "status": "제안",
+      "title": "곡 상세 페이지에 “관련 기억” 영역을 넣자는 제안",
+      "author": "방문자",
+      "date": "2026-05-17",
+      "comments": 1,
+      "excerpt": "곡별로 가사와 해설뿐 아니라 당시 공연 기억, 참여자 코멘트, 후대의 기억을 함께 모으면 좋겠습니다."
+    }
+  ]
+}

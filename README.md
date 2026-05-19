@@ -21,13 +21,7 @@ Frontend-only HTML5 프로토타입입니다.
 
 ## 실행 방법
 
-브라우저에서 다음 파일을 열면 됩니다.
-
-```text
-prototype/index.html
-```
-
-또는 간단한 정적 서버로 실행할 수 있습니다.
+현재 프로토타입은 `data/*.json`을 `fetch()`로 불러오므로, `file://`로 직접 열기보다 간단한 정적 서버로 실행해야 합니다.
 
 ```bash
 cd prototype
@@ -40,9 +34,30 @@ python -m http.server 8000
 http://localhost:8000
 ```
 
+GitHub Pages/GitHub Actions 배포 환경처럼 HTTP로 제공되는 경우에는 그대로 동작합니다.
+
 ## GitHub Pages 배포
 
-`prototype/index.html`은 정적 HTML/CSS/JS만 사용합니다. GitHub Pages에서 루트 또는 `/prototype` 폴더를 배포 대상으로 설정하면 동작합니다.
+`prototype/index.html`과 `prototype/data/*.json`은 정적 파일만 사용합니다. GitHub Pages에서 루트 또는 `/prototype` 폴더를 배포 대상으로 설정하면 동작합니다.
+
+## 데이터 구조
+
+화면 로직은 `index.html`에 두고, 콘텐츠 데이터는 아래 JSON 파일로 분리했습니다.
+
+```text
+prototype/data/
+├─ index.json              # 데이터 매니페스트
+├─ README.md               # 데이터 편집 가이드
+├─ assumptions.json
+├─ navigation.json
+├─ opening.json
+├─ years.json
+├─ original-texts.json
+├─ discussion.json
+└─ songs.json
+```
+
+연도별 자료를 추가할 때는 우선 `years.json`과 `original-texts.json`을 수정하고, 메뉴 구조 변경이 필요할 때만 `navigation.json`을 수정합니다. 새 데이터 파일을 추가할 때는 `data/index.json`에 먼저 등록합니다.
 
 ## 프로토타입 가정
 
