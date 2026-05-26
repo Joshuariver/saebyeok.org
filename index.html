@@ -1515,10 +1515,7 @@
     async function adminDeletePost(postId) {
       const pwd = prompt('운영자 비밀번호를 입력하세요.');
       if (pwd !== ADMIN_PW) { alert('비밀번호가 올바르지 않습니다.'); return; }
-      const { error } = await db
-        .from('board_posts')
-        .update({ is_deleted: true })
-        .eq('id', postId);
+      const { error } = await db.rpc('soft_delete_post', { post_id: postId });
       if (error) { alert('삭제 실패: ' + error.message); return; }
       document.getElementById(`post-${postId}`)?.remove();
     }
@@ -1526,10 +1523,7 @@
     async function adminDeleteComment(commentId, postId) {
       const pwd = prompt('운영자 비밀번호를 입력하세요.');
       if (pwd !== ADMIN_PW) { alert('비밀번호가 올바르지 않습니다.'); return; }
-      const { error } = await db
-        .from('board_comments')
-        .update({ is_deleted: true })
-        .eq('id', commentId);
+      const { error } = await db.rpc('soft_delete_comment', { comment_id: commentId });
       if (error) { alert('삭제 실패: ' + error.message); return; }
       document.getElementById(`comment-${commentId}`)?.remove();
     }
