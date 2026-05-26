@@ -736,9 +736,123 @@
       .hero h1 { font-size: 2rem; }
       .hero { padding: 2rem 1.35rem; }
     }
+
+    /* ===== PASSWORD GATE ===== */
+    #pw-gate {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--paper);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+    }
+
+    #pw-gate .pw-brand {
+      text-align: center;
+    }
+
+    #pw-gate .pw-brand strong {
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--midnight);
+      display: block;
+      letter-spacing: -.02em;
+    }
+
+    #pw-gate .pw-brand span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      letter-spacing: .05em;
+    }
+
+    #pw-gate .pw-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    #pw-gate label {
+      font-size: .88rem;
+      color: var(--muted);
+      align-self: flex-start;
+    }
+
+    #pw-input {
+      width: 100%;
+      padding: .65rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1rem;
+      letter-spacing: .08em;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    #pw-input:focus {
+      border-color: var(--dusk);
+    }
+
+    #pw-submit {
+      width: 100%;
+      padding: .65rem 1rem;
+      background: var(--midnight);
+      color: var(--paper);
+      border: none;
+      border-radius: var(--r);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    #pw-submit:hover {
+      background: var(--dusk);
+    }
+
+    #pw-error {
+      font-size: .83rem;
+      color: var(--brick);
+      min-height: 1.2em;
+    }
+
+    #pw-gate .pw-note {
+      font-size: .75rem;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    body.pw-locked > *:not(#pw-gate) {
+      visibility: hidden;
+    }
   </style>
 </head>
-<body>
+<body class="pw-locked">
+  <div id="pw-gate">
+    <div class="pw-brand">
+      <strong>노래모임 새벽의 아카이브</strong>
+      <span>1984–1994 · 그리고 그 이후의 이야기</span>
+    </div>
+    <div class="pw-box">
+      <label for="pw-input">비밀번호를 입력하세요</label>
+      <input id="pw-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+      <div id="pw-error" aria-live="polite"></div>
+      <button id="pw-submit" type="button">접속하기</button>
+    </div>
+    <p class="pw-note">이 사이트는 현재 사전 공개 단계입니다.<br>접속 비밀번호는 운영진에게 문의하세요.</p>
+  </div>
+
   <div class="demo-bar">Demo / Prototype — 실제 기능은 작동하지 않습니다. 모든 데이터는 화면 검증용 Mock Data입니다.</div>
   <header>
     <div class="header-inner">
@@ -1103,6 +1217,44 @@
     window.setRoute = setRoute;
     window.filterSongs = filterSongs;
     window.addEventListener('hashchange', () => { parseHash(); render(); });
+
+    /* ===== PASSWORD GATE ===== */
+    (function initPasswordGate() {
+      const CORRECT = '__DAWN_PASSWORD__';
+      const SESSION_KEY = 'dawn_auth';
+
+      function unlock() {
+        document.getElementById('pw-gate').remove();
+        document.body.classList.remove('pw-locked');
+      }
+
+      function tryPassword() {
+        const val = document.getElementById('pw-input').value;
+        const err = document.getElementById('pw-error');
+        if (val === CORRECT) {
+          sessionStorage.setItem(SESSION_KEY, '1');
+          unlock();
+        } else {
+          err.textContent = '비밀번호가 올바르지 않습니다.';
+          document.getElementById('pw-input').value = '';
+          document.getElementById('pw-input').focus();
+        }
+      }
+
+      if (sessionStorage.getItem(SESSION_KEY) === '1') {
+        unlock();
+        return;
+      }
+
+      document.getElementById('pw-submit').addEventListener('click', tryPassword);
+      document.getElementById('pw-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') tryPassword();
+        document.getElementById('pw-error').textContent = '';
+      });
+
+      document.getElementById('pw-input').focus();
+    })();
+    /* ========================= */
 
     async function init() {
       try {
