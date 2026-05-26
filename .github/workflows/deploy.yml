@@ -25,13 +25,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject password from secret
+      - name: Inject passwords from secrets
         env:
           DAWN_PASSWORD: ${{ secrets.DAWN_PASSWORD }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
-          sed -i "s/__DAWN_PASSWORD__/${DAWN_PASSWORD}/g" index.html
-          sed -i "s/__ADMIN_PASSWORD__/${ADMIN_PASSWORD}/g" index.html
+          python3 -c "
+          import os
+          with open('index.html', 'r', encoding='utf-8') as f:
+              html = f.read()
+          html = html.replace('__DAWN_PASSWORD__', os.environ['DAWN_PASSWORD'])
+          html = html.replace('__ADMIN_PASSWORD__', os.environ['ADMIN_PASSWORD'])
+          with open('index.html', 'w', encoding='utf-8') as f:
+              f.write(html)
+          "
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
