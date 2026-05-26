@@ -904,6 +904,60 @@
       gap: .75rem;
       margin-top: .5rem;
     }
+
+    .board-post-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: .4rem;
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: .8rem;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .btn-link:hover { color: var(--ink); }
+
+    .btn-link.admin-btn { color: var(--brick); }
+
+    .comments-section {
+      margin-top: .75rem;
+      padding-top: .75rem;
+      border-top: 1px dashed var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .board-comment {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: .6rem .9rem;
+      display: flex;
+      flex-direction: column;
+      gap: .25rem;
+    }
+
+    .comment-form {
+      margin-top: .5rem;
+      padding-top: .5rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .char-counter {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      text-align: right;
+      margin-top: -.4rem;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -963,6 +1017,7 @@
     const SUPABASE_URL  = 'https://lzevtegsjhdpumzoiwcb.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6ZXZ0ZWdzamhkcHVtem9pd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3OTQxMjksImV4cCI6MjA5NTM3MDEyOX0.mXtDfAZDydAzShkABEbRNkuyUHj7oJuJM2i0FXBrYQk';
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    const ADMIN_PW = '__ADMIN_PASSWORD__';
     /* =================== */
 
     let PROTOTYPE_ASSUMPTIONS = [];
@@ -1266,7 +1321,8 @@
           <div class="card">
             <h3 style="margin-bottom:.75rem">글쓰기</h3>
             <div class="board-form">
-              <input id="post-author" type="text" placeholder="닉네임 (최대 20자)" maxlength="20" />
+              <input id="post-author" type="text" placeholder="닉네임 (최대 20자)" maxlength="20" oninput="updateCharCount('post-author','post-author-count',20)" />
+              <div id="post-author-count" class="char-counter">0 / 20</div>
               <textarea id="post-content" placeholder="내용을 입력하세요 (최대 500자)" rows="4" maxlength="500"></textarea>
               <div id="post-error" class="board-form-error"></div>
               <button class="btn primary" onclick="submitPost()">게시하기</button>
@@ -1315,9 +1371,14 @@
         });
         const author = post.author || '익명';
         const content = post.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return `<div class="board-post">
+        return `<div class="board-post" id="post-${post.id}">
           <div class="board-post-meta">${author} · ${date}</div>
           <div class="board-post-content">${content}</div>
+          <div class="board-post-actions">
+            <button class="btn-link" onclick="toggleComments(${post.id})">댓글 보기</button>
+            <button class="btn-link admin-btn" onclick="adminDeletePost(${post.id})">삭제</button>
+          </div>
+          <div class="comments-section" id="comments-${post.id}" style="display:none"></div>
         </div>`;
       }).join('');
     }
@@ -1363,7 +1424,122 @@
       await loadBoardPosts();
     }
 
+    function updateCharCount(inputId, counterId, max) {
+      const len = (document.getElementById(inputId)?.value || '').length;
+      const el = document.getElementById(counterId);
+      if (el) el.textContent = `${len} / ${max}`;
+    }
+
+    async function toggleComments(postId) {
+      const section = document.getElementById(`comments-${postId}`);
+      if (!section) return;
+      if (section.style.display === 'none') {
+        section.style.display = 'flex';
+        section.innerHTML = `<p class="board-empty" style="font-size:.83rem">댓글을 불러오는 중…</p>`;
+        await loadComments(postId);
+      } else {
+        section.style.display = 'none';
+      }
+    }
+
+    async function loadComments(postId) {
+      const section = document.getElementById(`comments-${postId}`);
+      if (!section) return;
+
+      const { data, error } = await db
+        .from('board_comments')
+        .select('id, author, content, created_at')
+        .eq('post_id', postId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        section.innerHTML = `<p class="board-empty" style="font-size:.83rem">댓글을 불러오지 못했습니다.</p>`;
+        return;
+      }
+
+      const commentListHtml = data.length === 0
+        ? `<p class="board-empty" style="font-size:.83rem">아직 댓글이 없습니다.</p>`
+        : data.map(c => {
+            const d = new Date(c.created_at).toLocaleString('ko-KR', {
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit'
+            });
+            const content = c.content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<div class="board-comment" id="comment-${c.id}">
+              <div class="board-post-meta">${c.author || '익명'} · ${d}</div>
+              <div class="board-post-content" style="font-size:.9rem">${content}</div>
+              <div><button class="btn-link admin-btn" onclick="adminDeleteComment(${c.id},${postId})">삭제</button></div>
+            </div>`;
+          }).join('');
+
+      section.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:.4rem;width:100%">${commentListHtml}</div>
+        <div class="comment-form board-form">
+          <input id="comment-author-${postId}" type="text" placeholder="닉네임 (최대 20자)" maxlength="20"
+            oninput="updateCharCount('comment-author-${postId}','comment-author-count-${postId}',20)" />
+          <div id="comment-author-count-${postId}" class="char-counter">0 / 20</div>
+          <textarea id="comment-content-${postId}" placeholder="댓글 내용 (최대 200자)" rows="2" maxlength="200"></textarea>
+          <div id="comment-error-${postId}" class="board-form-error"></div>
+          <button class="btn primary" style="align-self:flex-start" onclick="submitComment(${postId})">댓글 달기</button>
+        </div>`;
+    }
+
+    async function submitComment(postId) {
+      const authorEl  = document.getElementById(`comment-author-${postId}`);
+      const contentEl = document.getElementById(`comment-content-${postId}`);
+      const errorEl   = document.getElementById(`comment-error-${postId}`);
+      const btn       = contentEl?.parentElement?.querySelector('.btn.primary');
+
+      const author  = (authorEl?.value.trim() || '익명').slice(0, 20);
+      const content = contentEl?.value.trim();
+
+      errorEl.textContent = '';
+      if (!content) { errorEl.textContent = '댓글 내용을 입력해 주세요.'; return; }
+
+      if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+
+      const { error } = await db
+        .from('board_comments')
+        .insert({ post_id: postId, author, content });
+
+      if (btn) { btn.disabled = false; btn.textContent = '댓글 달기'; }
+
+      if (error) { errorEl.textContent = `저장 실패: ${error.message}`; return; }
+
+      if (authorEl)  authorEl.value  = '';
+      if (contentEl) contentEl.value = '';
+      await loadComments(postId);
+    }
+
+    async function adminDeletePost(postId) {
+      const pwd = prompt('운영자 비밀번호를 입력하세요.');
+      if (pwd !== ADMIN_PW) { alert('비밀번호가 올바르지 않습니다.'); return; }
+      const { error } = await db
+        .from('board_posts')
+        .update({ is_deleted: true })
+        .eq('id', postId);
+      if (error) { alert('삭제 실패: ' + error.message); return; }
+      document.getElementById(`post-${postId}`)?.remove();
+    }
+
+    async function adminDeleteComment(commentId, postId) {
+      const pwd = prompt('운영자 비밀번호를 입력하세요.');
+      if (pwd !== ADMIN_PW) { alert('비밀번호가 올바르지 않습니다.'); return; }
+      const { error } = await db
+        .from('board_comments')
+        .update({ is_deleted: true })
+        .eq('id', commentId);
+      if (error) { alert('삭제 실패: ' + error.message); return; }
+      document.getElementById(`comment-${commentId}`)?.remove();
+    }
+
     window.submitPost = submitPost;
+    window.submitComment = submitComment;
+    window.toggleComments = toggleComments;
+    window.adminDeletePost = adminDeletePost;
+    window.adminDeleteComment = adminDeleteComment;
+    window.updateCharCount = updateCharCount;
     /* ========================== */
 
     function filterSongs() {

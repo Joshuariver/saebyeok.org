@@ -28,8 +28,10 @@ jobs:
       - name: Inject password from secret
         env:
           DAWN_PASSWORD: ${{ secrets.DAWN_PASSWORD }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
         run: |
           sed -i "s/__DAWN_PASSWORD__/${DAWN_PASSWORD}/g" index.html
+          sed -i "s/__ADMIN_PASSWORD__/${ADMIN_PASSWORD}/g" index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
